@@ -1,0 +1,24 @@
+name: Hello Deploy
+
+on:
+  push:
+    branches:
+      - main
+  
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Traer el codigo del repositorio (esto hace el checkout)
+        uses: actions/checkout@v3
+      - name: Agregar llave SSH privada
+        run: |
+                mkdir -p ~/.ssh
+                echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/private_key
+                chmod 600 ~/.ssh/private_key
+      - name: Agregar el host a known_hosts
+        run: ssh-keyscan -H "${{ secrets.SERVER_HOST }}" >> ~/.ssh/known_hosts
+      - name: Copiar index.html al servidor
+        run: |
+          scp -i ~/.ssh/private_key -o StrictHostKeyChecking=no index.html ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/var/www/html/index.html
